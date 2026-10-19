@@ -1,0 +1,8 @@
+{
+  "name": "mtscraper",
+  "version": "1.2.0",
+  "description": "Free website crawler for Claude Code: scrape any site, including JavaScript pages, into clean text.",
+  "author": { "name": "MazTech", "url": "https://maztech.me" },
+  "homepage": "https://maztech.me",
+  "license": "MIT"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "maztech",
+  "owner": { "name": "MazTech", "url": "https://maztech.me" },
+  "plugins": [
+    {
+      "name": "mtscraper",
+      "source": "./",
+      "description": "Free website crawler for Claude Code: scrape any site, including JavaScript pages, into clean text."
+    }
+  ]
+}

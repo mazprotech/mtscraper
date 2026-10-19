@@ -1,0 +1,9 @@
+__pycache__/
+.scrapy/
+scraped/
+jobs/
+*.jsonl
+
+*.zip
+scraped/
+__pycache__/
