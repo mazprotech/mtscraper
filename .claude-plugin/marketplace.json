@@ -5,7 +5,7 @@
     {
       "name": "mtscraper",
       "source": "./",
-      "description": "Free website crawler for Claude Code: scrape any site, including JavaScript pages, into clean text."
+      "description": "Free website crawler for AI coding agents: scrape any site, including JavaScript pages and linked PDFs, into clean text."
     }
   ]
 }

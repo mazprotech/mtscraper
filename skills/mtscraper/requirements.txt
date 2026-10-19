@@ -1,3 +1,0 @@
-scrapy>=2.13,<3
-trafilatura>=1.6,<3
-scrapy-playwright>=0.0.40,<0.1

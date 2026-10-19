@@ -1,9 +1,7 @@
-__pycache__/
-.scrapy/
+node_modules/
+storage/
 scraped/
-jobs/
-*.jsonl
-
 *.zip
-scraped/
-__pycache__/
+*.jsonl
+!examples/*.jsonl
+.crawlee/
