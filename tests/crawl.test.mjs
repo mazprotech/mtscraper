@@ -16,7 +16,7 @@ const page = (title, body) => `<!doctype html><html><head><title>${title}</title
 let server, base, hits, pdfBytes, chromium;
 const pages = {
   "/index.html": page("Home", `<a href="a.html">A</a> <a href="b.html">B</a> <a href="mailto:x@y.z">mail</a>`),
-  "/a.html": page("Page A", `<a href="b.html">B again</a> <a href="/index.html">home</a>`),
+  "/a.html": page("Page A", `<a href="b.html">B again</a> <a href="/index.html">home</a> <a href="logo.png">logo</a> <a href="/report">report</a>`),
   "/b.html": page("Page B", `<a href="#top">top</a>`),
   "/app.html": `<!doctype html><html><head><title>App</title></head><body>
     <h1>App</h1><div id="v">Welcome</div>
@@ -46,7 +46,8 @@ before(async () => {
   hits = [];
   server = http.createServer((req, res) => {
     hits.push(req.url);
-    if (req.url === "/prices.pdf" && pdfBytes) { res.writeHead(200, { "content-type": "application/pdf" }); return res.end(pdfBytes); }
+    if ((req.url === "/prices.pdf" || req.url === "/report") && pdfBytes) { res.writeHead(200, { "content-type": "application/pdf" }); return res.end(pdfBytes); }
+    if (req.url === "/logo.png") { res.writeHead(200, { "content-type": "image/png" }); return res.end(Buffer.from("89504e470d0a1a0a", "hex")); }
     const html = pages[req.url];
     if (!html) { res.writeHead(404); return res.end("no"); }
     res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
@@ -91,15 +92,19 @@ test("follow= keeps the crawl inside matching URLs", async () => {
 
 test("linked PDFs are downloaded and their text and tables extracted", async (t) => {
   if (!chromium) return t.skip("needs Chromium");
-  const { records } = await run({ maxPages: 0 });
-  const pdf = records.find((r) => r.type === "pdf");
+  const { records, stats } = await run({ maxPages: 0 });
+  const pdf = records.find((r) => r.url.endsWith("/prices.pdf"));
   assert.ok(pdf, "a pdf record");
-  assert.match(pdf.url, /prices\.pdf$/);
+  assert.equal(pdf.type, "pdf");
   assert.match(pdf.text, /Widget/);
   assert.equal(pdf.tables.length, 1);
   assert.deepEqual(pdf.tables[0][0], ["Item", "Price"]);
   assert.deepEqual(pdf.tables[0][1], ["Widget", "9.99"]);
+  const noExt = records.find((r) => r.url.endsWith("/report"));
+  assert.equal(noExt?.type, "pdf", "a PDF served without a .pdf extension is still extracted");
   assert.equal(records.filter((r) => r.type === "html").length, 3);
+  assert.equal(stats.failed, 0, "image links are skipped, not fetched and failed");
+  assert.ok(!hits.includes("/logo.png"));
 });
 
 test("--js renders in Chromium and --click saves each view but never clicks risky buttons", async (t) => {

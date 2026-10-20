@@ -8,7 +8,10 @@ export const UA = "Mozilla/5.0 (compatible; MTScraper/2.0; +https://maztech.me)"
 // Buttons whose label suggests they change something are never clicked (a label check cannot catch everything).
 export const RISKY = /\b(delete|remove|log ?out|sign ?out|buy|pay|checkout|purchase|place order|add to cart|submit|send|subscribe|unsubscribe|register|sign ?up|confirm|upload|donate)\b/i;
 
-const isPdfUrl = (u) => { try { return new URL(u).pathname.toLowerCase().endsWith(".pdf"); } catch { return false; } };
+const ext = (u) => { try { return (new URL(u).pathname.match(/\.([a-z0-9]{1,5})$/i) || [, ""])[1].toLowerCase(); } catch { return ""; } };
+const isPdfUrl = (u) => ext(u) === "pdf";
+// Links to files that are neither pages nor PDFs are not worth a request (they would only count as failures).
+const SKIP_EXT = /^(png|jpe?g|gif|webp|svg|ico|bmp|tiff?|avif|mp3|mp4|m4a|wav|ogg|webm|mov|avi|zip|gz|tgz|bz2|7z|rar|exe|dmg|msi|apk|iso|docx?|xlsx?|pptx?|css|js|mjs|json|xml|rss|atom|woff2?|ttf|otf|eot)$/;
 const squeeze = (s) => s.replace(/[ \t ]+/g, " ").replace(/ ?\n ?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 
 /**
@@ -38,6 +41,7 @@ export async function crawl({ urls, maxPages = 1000, follow = "", js = false, cl
   const stop = (reason) => { stats.reason = reason; crawler.stop(reason); };
 
   const prepare = (req) => { // start URLs and discovered links alike
+    if (SKIP_EXT.test(ext(req.url))) return false;
     if (isPdfUrl(req.url)) {
       if (!pdf) return false;
       req.label = "pdf";
@@ -52,6 +56,7 @@ export async function crawl({ urls, maxPages = 1000, follow = "", js = false, cl
     if (maxPages && stats.saved >= maxPages) return stop("max_pages reached"); // was already downloading when the cap was reached
     let record;
     if (request.label === "pdf" || ctx.contentType?.type === "application/pdf") {
+      if (!pdf) return; // a PDF hiding behind a URL without .pdf: only known after the download
       const body = request.label === "pdf" ? (await ctx.sendRequest({ responseType: "buffer" })).body : ctx.body;
       if (body.subarray(0, 5).toString() !== "%PDF-") return;
       const name = new URL(request.url).pathname.split("/").pop() || "file.pdf";
