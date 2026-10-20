@@ -95,7 +95,7 @@ if (o.mcp) {
     write(record);
     if (!o.quiet) console.error(`saved ${record.type} ${record.url}${record.view ? ` [${record.view}]` : ""}`);
   });
-  console.error(`done: ${stats.saved} records -> ${out} (${stats.reason}${stats.failed ? `, ${stats.failed} failed` : ""})`);
+  console.error(`done: ${stats.records} records -> ${out} (${stats.reason}${stats.failed ? `, ${stats.failed} failed` : ""})`);
 }
 
 function writer(out, csv) {

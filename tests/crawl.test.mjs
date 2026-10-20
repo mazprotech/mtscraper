@@ -120,7 +120,9 @@ test("a PDF can be the start URL", async (t) => {
 test("--js renders in Chromium and --click saves each view but never clicks risky buttons", async (t) => {
   if (!chromium) return t.skip("needs Chromium");
   const records = [];
-  await crawl({ urls: [`${base}/app.html`], maxPages: 1, pdf: false, click: "button", wait: 100 }, (r) => records.push(r));
+  const stats = await crawl({ urls: [`${base}/app.html`], maxPages: 1, pdf: false, click: "button", wait: 100 }, (r) => records.push(r));
+  assert.equal(stats.saved, 1, "one page counts toward the cap");
+  assert.equal(stats.records, 3, "the summary counts every record, views included");
   assert.equal(records[0].title, "App");
   assert.equal(records[0].view, "");
   assert.deepEqual(records.slice(1).map((r) => r.view), ["Tab A", "Tab B"]);

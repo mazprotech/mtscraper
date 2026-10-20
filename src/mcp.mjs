@@ -43,7 +43,7 @@ export async function serve() {
       used += s.length;
       inline.push(r);
     }
-    const text = JSON.stringify({ file, saved: stats.saved, failed: stats.failed, reason: stats.reason,
+    const text = JSON.stringify({ file, saved: stats.records, pages: stats.saved, failed: stats.failed, reason: stats.reason,
       truncated: inline.length < records.length ? `showing ${inline.length} of ${records.length} records, read the file for all` : false,
       records: inline });
     return { content: [{ type: "text", text }] };

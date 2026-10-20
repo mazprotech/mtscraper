@@ -26,13 +26,14 @@ const squeeze = (s) => s.replace(/[ \t ]+/g, " ").replace(/ ?\n ?/g, "\n").repl
  * @param {string}  [o.resume]     name of a resumable run (re-run the same command after Ctrl+C)
  * @param {string}  [o.storageDir] where Crawlee keeps its queue
  * @param {(record: object) => void} onRecord
- * @returns {Promise<{saved: number, failed: number, reason: string}>}
+ * @returns {Promise<{saved: number, records: number, failed: number, reason: string}>} saved = pages, records = rows written
  */
 export async function crawl({ urls, maxPages = 1000, follow = "", js = false, click = "", wait = 1500, pdf = true, resume = "", storageDir = "" }, onRecord) {
   if (storageDir) process.env.CRAWLEE_STORAGE_DIR = storageDir;
   process.env.CRAWLEE_PURGE_ON_START = "0"; // we use our own named queue below, nothing shared to purge
   const useBrowser = js || !!click;
-  const stats = { saved: 0, failed: 0, reason: "finished" };
+  const stats = { saved: 0, records: 0, failed: 0, reason: "finished" }; // saved = pages (the cap), records = everything written incl. clicked views
+  const emit = (record) => { stats.records++; onRecord(record); };
   // A queue of its own per run, so runs in one process (MCP mode) never see each other's URLs.
   const queueName = resume ? `resume-${resume.replace(/[^\w-]/g, "_")}` : `run-${Date.now()}-${process.pid}`;
   const requestQueue = await RequestQueue.open(queueName);
@@ -75,7 +76,7 @@ export async function crawl({ urls, maxPages = 1000, follow = "", js = false, cl
     }
     const url = request.loadedUrl ?? request.url;
     stats.saved++;
-    onRecord({ url, title: record.title, view: "", type: record.type, text: record.text, tables: record.tables });
+    emit({ url, title: record.title, view: "", type: record.type, text: record.text, tables: record.tables });
     if (click && ctx.page) await clickViews(ctx.page, url, record.title, new Set([record.text]));
     if (maxPages && stats.saved >= maxPages) return stop("max_pages reached"); // queue nothing more; in-flight downloads still finish
     if (record.type === "html") await ctx.enqueueLinks({ strategy: "same-domain", transformRequestFunction });
@@ -109,7 +110,7 @@ export async function crawl({ urls, maxPages = 1000, follow = "", js = false, cl
       const text = await page.innerText("body");
       if (text && !texts.has(text)) { // only save views that actually changed
         texts.add(text);
-        onRecord({ url, title: `${title} | ${label}`, view: label, type: "html", text: squeeze(text), tables: [] });
+        emit({ url, title: `${title} | ${label}`, view: label, type: "html", text: squeeze(text), tables: [] });
       }
       if (page.url().split("#")[0] !== url.split("#")[0]) await page.goto(url); // button navigated away: come back
     }
