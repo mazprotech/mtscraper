@@ -107,6 +107,16 @@ test("linked PDFs are downloaded and their text and tables extracted", async (t)
   assert.ok(!hits.includes("/logo.png"));
 });
 
+test("a PDF can be the start URL", async (t) => {
+  if (!chromium) return t.skip("needs Chromium");
+  const records = [];
+  const stats = await crawl({ urls: [`${base}/prices.pdf`], maxPages: 1 }, (r) => records.push(r));
+  assert.equal(stats.failed, 0);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].type, "pdf");
+  assert.deepEqual(records[0].tables[0][1], ["Widget", "9.99"]);
+});
+
 test("--js renders in Chromium and --click saves each view but never clicks risky buttons", async (t) => {
   if (!chromium) return t.skip("needs Chromium");
   const records = [];
@@ -117,6 +127,14 @@ test("--js renders in Chromium and --click saves each view but never clicks risk
   assert.match(records[1].text, /Alpha content/);
   assert.match(records[2].text, /Beta content/);
   assert.ok(records.every((r) => !/DELETED|SUBMITTED/.test(r.text)), "Delete and form buttons were skipped");
+});
+
+test("buttons: lists the clickable elements of a page", async (t) => {
+  if (!chromium) return t.skip("needs Chromium");
+  const { listButtons } = await import("../src/crawl.mjs");
+  const rows = await listButtons(`${base}/app.html`);
+  assert.deepEqual(rows.map((r) => r[3]), ["Tab A", "Tab B", "Delete", "Go"]);
+  assert.equal(rows[0][0], "button");
 });
 
 test("layout(): aligned columns become a table, prose stays prose", () => {

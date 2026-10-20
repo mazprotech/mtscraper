@@ -175,7 +175,7 @@ mtscraper --mcp              run as an MCP server over stdio
 |---|---|
 | `-o, --out <file>` | Output `.jsonl` or `.csv` (default `scraped/<host>.jsonl`; appends if the file exists) |
 | `-n, --max-pages <N>` | Stop after N pages (default 1000, `0` = no cap). PDFs count as pages |
-| `-f, --follow <text>` | Only follow links whose URL contains this text, e.g. `/blog/` |
+| `-f, --follow <text>` | Only follow links whose URL contains this text, e.g. `/blog/` (in Git Bash on Windows, run with `MSYS_NO_PATHCONV=1` so `/blog/` is not rewritten as a path) |
 | `--js` | Render pages in headless Chromium for JavaScript sites (5-10x slower) |
 | `--click <selector>` | Click each matching button or tab and save every view (implies `--js`) |
 | `--wait <ms>` | Wait after each click for the view to update (default 1500) |

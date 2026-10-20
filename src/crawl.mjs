@@ -57,8 +57,16 @@ export async function crawl({ urls, maxPages = 1000, follow = "", js = false, cl
     let record;
     if (request.label === "pdf" || ctx.contentType?.type === "application/pdf") {
       if (!pdf) return; // a PDF hiding behind a URL without .pdf: only known after the download
-      const body = request.label === "pdf" ? (await ctx.sendRequest({ responseType: "buffer" })).body : ctx.body;
-      if (body.subarray(0, 5).toString() !== "%PDF-") return;
+      let body = ctx.body;
+      if (request.label === "pdf") {
+        const res = await ctx.sendRequest({ responseType: "buffer", headers: { "user-agent": UA } });
+        if (res.statusCode >= 400) throw new Error(`HTTP ${res.statusCode}`); // counted and logged as a failed request
+        body = res.body;
+      }
+      if (body.subarray(0, 5).toString() !== "%PDF-") {
+        log.warning(`not a PDF, skipped: ${request.url}`);
+        return;
+      }
       const name = new URL(request.url).pathname.split("/").pop() || "file.pdf";
       record = { ...(await fromPdf(body, name)), type: "pdf" };
     } else {
